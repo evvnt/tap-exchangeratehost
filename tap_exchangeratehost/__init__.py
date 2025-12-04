@@ -67,6 +67,7 @@ def do_sync(access_key, source, date_start: str, date_stop: str, currencies: Opt
 
     date_to_process = date_start
     data = []
+    record = []
     state = {
         'date_start': date_start,
         'date_stop': date_stop
