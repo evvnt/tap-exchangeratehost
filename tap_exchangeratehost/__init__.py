@@ -95,6 +95,14 @@ def do_sync(access_key, source, date_start: str, date_stop: str, currencies: Opt
         if response:
             record = response.json().get('quotes')
             if record:
+                # Remove the source currency from the keys of the quotes: "USDGBP" => "GBP"
+                cleaned_record = {}
+                for key, value in record.items():
+                    if key != source:
+                        cleaned_record[key.replace("USD", "")] = value
+                    else:
+                        cleaned_record[key] = value
+                record = cleaned_record
                 record[source] = 1.0
                 record['date'] = date_to_process
                 data = data + [record]
