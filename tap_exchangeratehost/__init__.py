@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 from datetime import timedelta
+from datetime import datetime
 from datetime import date
 import json
 import time
@@ -73,7 +74,7 @@ def do_sync(access_key, source, date_start: str, date_stop: str, currencies: Opt
         'date_stop': date_stop
     }
 
-    while date.fromisoformat(date_to_process) <= date.fromisoformat(date_stop):
+    while datetime.fromisoformat(date_to_process) <= datetime.fromisoformat(date_stop):
         params = {
             "access_key": access_key,
             "source": source,
@@ -95,7 +96,6 @@ def do_sync(access_key, source, date_start: str, date_stop: str, currencies: Opt
         if response:
             record = response.json().get('quotes')
             if record:
-                # Remove the source currency from the keys of the quotes: "USDGBP" => "GBP"
                 cleaned_record = {}
                 for key, value in record.items():
                     if key != source:
@@ -104,18 +104,18 @@ def do_sync(access_key, source, date_start: str, date_stop: str, currencies: Opt
                         cleaned_record[key] = value
                 record = cleaned_record
                 record[source] = 1.0
-                record['date'] = date_to_process
+                record['date'] =  time.strftime("%Y-%m-%dT%H:%M:%SZ", time.strptime(date_to_process, DATE_FORMAT))
                 data = data + [record]
 
-        date_to_process = (date.fromisoformat(date_to_process) + timedelta(days=1)).strftime(DATE_FORMAT)
+        date_to_process = (datetime.fromisoformat(date_to_process) + timedelta(days=1)).strftime(DATE_FORMAT)
 
     if record:
         singer.write_schema("exchange_rate", make_schema(record), "date")
         for record in data:
             singer.write_records("exchange_rate", [record])
-            state['date_start'] = (date.fromisoformat(record['date']) + timedelta(days=1)).strftime(DATE_FORMAT)
+            state['date_start'] = (datetime.fromisoformat(record['date']) + timedelta(days=1)).strftime(DATE_FORMAT)
         
-        state['date_stop'] = (date.fromisoformat(state['date_stop']) + timedelta(days=1)).strftime(DATE_FORMAT)
+        state['date_stop'] = (datetime.fromisoformat(state['date_stop']) + timedelta(days=1)).strftime(DATE_FORMAT)
         singer.write_state(state)
         logger.info(json.dumps(
             {"message": f"tap completed successfully rows={len(data)}"}
