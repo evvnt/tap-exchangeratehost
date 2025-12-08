@@ -30,7 +30,7 @@ def make_schema(record: dict) -> dict:
         "properties": {
             "date": {
                 "type": "string",
-                "format": "date",
+                "format": "date-time",
             }
         }
     }
